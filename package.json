@@ -1,0 +1,52 @@
+{
+  "name": "@tiger-framework/core",
+  "version": "1.0.0",
+  "description": "A modern, lightweight web framework built on top of Bun",
+  "module": "index.ts",
+  "type": "module",
+  "author": "Leaf",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/tiger-framework"
+  },
+  "keywords": [
+    "tiger",
+    "framework",
+    "web",
+    "bun",
+    "typescript",
+    "compiler"
+  ],
+  "scripts": {
+    "dev": "bun src/dev/dev-server.ts",
+    "build": "bun src/build/build.ts",
+    "serve": "bun src/dev/serve.ts",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "bun run clean && bun run build"
+  },
+  "bin": {
+    "tiger": "./src/cli/tiger.ts"
+  },
+  "files": [
+    "src",
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0",
+    "bun": "^1.0.0"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "ora": "^8.2.0",
+    "commander": "^12.0.0"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  }
+}
