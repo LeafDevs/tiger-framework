@@ -2,22 +2,6 @@
 
 A powerful, lightweight framework for building fast and scalable web applications with a modern, intuitive API.
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.0-orange.svg)](https://github.com/tiger-framework/tiger/releases)
-[![Build Status](https://img.shields.io/badge/build-passing-green.svg)](https://github.com/tiger-framework/tiger/actions)
-
-## Table of Contents
-- [Overview](#overview)
-- [Features](#features)
-- [Getting Started](#getting-started)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Documentation](#documentation)
-- [Examples](#examples)
-- [Contributing](#contributing)
-- [Community](#community)
-- [License](#license)
-
 ## Overview
 
 Tiger Framework is a modern web framework designed to make web development faster, more efficient, and more enjoyable. Built with performance and developer experience in mind, Tiger combines the best practices of modern web development with a simple, intuitive API.
