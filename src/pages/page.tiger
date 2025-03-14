@@ -1,0 +1,229 @@
+//@ts-nocheck
+
+import "./App.css"
+
+const TigerFrameworkPage = () => {
+  return (
+    <view className="app-container">
+      {/* Header Section */}
+      <view className="header-container">
+        <view className="header-content">
+          <text className="header-logo" as="h1">
+            <vector width="32" height="32" viewBox="0 0 32 32">
+              <path d="M16 2 L30 16 L16 30 L2 16 Z" fill="var(--primary-color)" />
+              <path d="M16 8 L24 16 L16 24 L8 16 Z" fill="none" stroke="white" strokeWidth="2" />
+            </vector>
+            Tiger
+          </text>
+          <view className="header-nav">
+            <link className="nav-link" to="#features">Features</link>
+            <link className="nav-link" to="#documentation">Documentation</link>
+            <link className="nav-link" to="#examples">Examples</link>
+            <link className="nav-link" to="https://github.com/tiger-framework">GitHub</link>
+          </view>
+        </view>
+      </view>
+
+      {/* Hero Section */}
+      <view className="hero-container">
+        <view className="hero-content">
+          <view className="hero-text">
+            <text className="hero-title" as="h1">
+              Build modern web applications with Tiger Framework
+            </text>
+            <text className="hero-subtitle" as="p">
+              A powerful, lightweight framework for building fast and scalable web applications
+            </text>
+            <text className="hero-description" as="p">
+              Tiger Framework combines the best of modern web development with a simple, intuitive API. 
+              Build beautiful, performant applications with less code and more fun.
+            </text>
+            <view className="hero-buttons">
+              <button className="primary-button">
+                Get Started
+              </button>
+              <button className="secondary-button">
+                View Documentation
+              </button>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      {/* Why Tiger Section */}
+      <view className="why-tiger-container">
+        <view className="why-tiger-content">
+          <view className="section-title">
+            <text as="h2">Why Choose Tiger Framework?</text>
+            <text as="p">
+              Discover what makes Tiger Framework the perfect choice for your next web application
+            </text>
+          </view>
+          <view className="why-tiger-grid">
+            <view className="why-tiger-item">
+              <text className="why-tiger-number">01</text>
+              <text className="why-tiger-title" as="h3">Lightweight & Fast</text>
+              <text className="why-tiger-description">
+                Tiger Framework is built with performance in mind. With a minimal bundle size and 
+                efficient rendering engine, your applications will load quickly and run smoothly.
+              </text>
+            </view>
+            <view className="why-tiger-item">
+              <text className="why-tiger-number">02</text>
+              <text className="why-tiger-title" as="h3">Developer Experience</text>
+              <text className="why-tiger-description">
+                Enjoy a modern development experience with hot reloading, TypeScript support, 
+                and comprehensive documentation. Write less code and build more features.
+              </text>
+            </view>
+            <view className="why-tiger-item">
+              <text className="why-tiger-number">03</text>
+              <text className="why-tiger-title" as="h3">Responsive by Design</text>
+              <text className="why-tiger-description">
+                Built-in responsive design system ensures your applications look perfect on all devices. 
+                Automatic layout adjustments and fluid typography for seamless cross-device experiences.
+              </text>
+            </view>
+            <view className="why-tiger-item">
+              <text className="why-tiger-number">04</text>
+              <text className="why-tiger-title" as="h3">Flexible & Extensible</text>
+              <text className="why-tiger-description">
+                Build applications your way with Tiger's flexible architecture. Easily integrate 
+                with your favorite tools and libraries while maintaining full control.
+              </text>
+            </view>
+            <view className="why-tiger-item">
+              <text className="why-tiger-number">05</text>
+              <text className="why-tiger-title" as="h3">Modern Features</text>
+              <text className="why-tiger-description">
+                Built-in support for modern web features like components, routing, and state management. 
+                Stay ahead with the latest web development practices.
+              </text>
+            </view>
+            <view className="why-tiger-item">
+              <text className="why-tiger-number">06</text>
+              <text className="why-tiger-title" as="h3">Community Driven</text>
+              <text className="why-tiger-description">
+                Join a growing community of developers. Get support, share ideas, and contribute 
+                to the future of web development with Tiger Framework.
+              </text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      {/* Features Section */}
+      <view className="features-container" id="features">
+        <view className="features-content">
+          <view className="section-title">
+            <text as="h2">Everything you need to build amazing apps</text>
+            <text as="p">
+              Tiger Framework provides all the tools and features you need to create 
+              beautiful, performant web applications.
+            </text>
+          </view>
+          <view className="features-grid">
+            {/* Feature 1 - Simple Syntax */}
+            <view className="feature-card">
+              <vector className="feature-icon" width="48" height="48" viewBox="0 0 48 48">
+                <path d="M24 4 L44 24 L24 44 L4 24 Z" fill="var(--primary-color)" opacity="0.1" />
+                <path d="M24 12 L36 24 L24 36 L12 24 Z" fill="none" stroke="var(--primary-color)" strokeWidth="2" />
+              </vector>
+              <text className="feature-title" as="h3">Simple Syntax</text>
+              <text className="feature-description">
+                Write clean, intuitive code with a familiar React-like syntax that's easy to learn and use.
+              </text>
+            </view>
+
+            {/* Feature 2 - Fast Performance */}
+            <view className="feature-card">
+              <vector className="feature-icon" width="48" height="48" viewBox="0 0 48 48">
+                <circle cx="24" cy="24" r="20" fill="none" stroke="var(--primary-color)" strokeWidth="2" />
+                <path d="M24 8 L24 24 L32 32" stroke="var(--primary-color)" strokeWidth="2" fill="none" />
+              </vector>
+              <text className="feature-title" as="h3">Fast Performance</text>
+              <text className="feature-description">
+                Lightning-fast rendering and minimal overhead for smooth, responsive applications.
+              </text>
+            </view>
+
+            {/* Feature 3 - Modern Features */}
+            <view className="feature-card">
+              <vector className="feature-icon" width="48" height="48" viewBox="0 0 48 48">
+                <path d="M8 8 L40 40 M8 40 L40 8" stroke="var(--primary-color)" strokeWidth="2" />
+                <circle cx="24" cy="24" r="16" fill="var(--primary-color)" opacity="0.1" />
+              </vector>
+              <text className="feature-title" as="h3">Modern Features</text>
+              <text className="feature-description">
+                Built-in support for modern web features like components, routing, and state management.
+              </text>
+            </view>
+
+            {/* Feature 4 - Developer Experience */}
+            <view className="feature-card">
+              <vector className="feature-icon" width="48" height="48" viewBox="0 0 48 48">
+                <path d="M24 4 L44 24 L24 44 L4 24 Z" fill="none" stroke="var(--primary-color)" strokeWidth="2" />
+                <path d="M24 12 L36 24 L24 36 L12 24 Z" fill="var(--primary-color)" opacity="0.1" />
+              </vector>
+              <text className="feature-title" as="h3">Developer Experience</text>
+              <text className="feature-description">
+                Excellent developer tools, hot reloading, and comprehensive documentation.
+              </text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      {/* CTA Section */}
+      <view className="cta-container">
+        <view className="cta-content">
+          <text className="cta-title" as="h2">
+            Ready to start building?
+          </text>
+          <text className="cta-description">
+            Join thousands of developers who are already building amazing applications with Tiger Framework.
+          </text>
+          <button className="primary-button">
+            Get Started Now
+          </button>
+        </view>
+      </view>
+
+      {/* Footer */}
+      <view className="footer-container">
+        <view className="footer-content">
+          <view className="footer-section">
+            <text as="h3">Tiger Framework</text>
+            <view className="footer-links">
+              <link className="footer-link" to="#features">Features</link>
+              <link className="footer-link" to="#documentation">Documentation</link>
+              <link className="footer-link" to="#examples">Examples</link>
+              <link className="footer-link" to="https://github.com/tiger-framework">GitHub</link>
+            </view>
+          </view>
+          <view className="footer-section">
+            <text as="h3">Resources</text>
+            <view className="footer-links">
+              <link className="footer-link" to="#blog">Blog</link>
+              <link className="footer-link" to="#community">Community</link>
+              <link className="footer-link" to="#support">Support</link>
+            </view>
+          </view>
+          <view className="footer-section">
+            <text as="h3">Legal</text>
+            <view className="footer-links">
+              <link className="footer-link" to="#privacy">Privacy</link>
+              <link className="footer-link" to="#terms">Terms</link>
+              <link className="footer-link" to="#license">License</link>
+            </view>
+          </view>
+        </view>
+        <text className="footer-copyright">
+          © 2024 Tiger Framework. All rights reserved.
+        </text>
+      </view>
+    </view>
+  );
+};
+
+export default TigerFrameworkPage;

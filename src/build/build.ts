@@ -1,56 +1,93 @@
-import { readFile, writeFile, mkdir, copyFile } from 'fs/promises';
-import { join } from 'path';
+import { readdir, readFile, writeFile, mkdir, copyFile } from 'fs/promises';
+import { join, dirname } from 'path';
 import { compileTigerToHTML } from './compiler';
 import { generateResponsiveCSS } from './responsive';
 import { Router } from './router';
 import chalk from 'chalk';
-import ora from 'ora';
+import { ThreadPool } from './ThreadPool';
 
-// Create a progress spinner
-const spinner = ora({
-  text: 'Initializing build process...',
-  color: 'cyan',
-  spinner: 'dots',
-  stream: process.stdout
-});
-
-// Function to update spinner text and show it
-function updateProgress(text: string) {
-  spinner.text = text;
-  spinner.start();
+interface BuildStats {
+  totalFiles: number;
+  compiledFiles: number;
+  errors: Array<{ file: string; error: string }>;
+  startTime: number;
+  endTime?: number;
 }
 
-// Function to log with color
-const log = {
-  info: (text: string) => {
-    spinner.stop();
-    console.log(chalk.cyan(`\nℹ️  ${text}`));
-    spinner.start();
-  },
-  success: (text: string) => {
-    spinner.stop();
-    console.log(chalk.green(`\n✓ ${text}`));
-    spinner.start();
-  },
-  error: (text: string) => {
-    spinner.stop();
-    console.log(chalk.red(`\n❌ ${text}`));
-    spinner.start();
-  },
-  warning: (text: string) => {
-    spinner.stop();
-    console.log(chalk.yellow(`\n⚠️  ${text}`));
-    spinner.start();
-  }
-};
+async function buildPage(route: string, source: string, template: string, cssImports: string[]): Promise<string> {
+  let html = await compileTigerToHTML(source);
+  const responsiveCSS = generateResponsiveCSS(html);
 
-// Function to extract CSS imports from Tiger file
+  let finalHtml = template;
+  if (cssImports.length > 0) {
+    const cssLinks = cssImports
+      .map(cssFile => `    <link rel="stylesheet" href="${cssFile}">`)
+      .join('\n');
+    finalHtml = finalHtml.replace('</head>', `${cssLinks}\n</head>`);
+  }
+
+  finalHtml = finalHtml.replace('</head>', `    <style>\n${responsiveCSS}\n    </style>\n</head>`);
+  finalHtml = finalHtml.replace("{{content}}", html).replaceAll("{/*", "<!--").replaceAll("*/}", "-->");
+
+  return finalHtml;
+}
+
+async function build() {
+  const startTime = Date.now();
+
+  try {
+    const router = new Router({
+      pagesDir: './src/pages',
+      distDir: './dist'
+    });
+    await router.initialize();
+
+    await mkdir('./dist', { recursive: true });
+    const template = await readFile('./src/template.html', 'utf-8');
+
+    const routes = router.getRoutes();
+    for (const route of routes) {
+      const source = await router.getPageContent(route);
+      const cssImports = extractCSSImports(source);
+
+      for (const cssFile of cssImports) {
+        try {
+          await copyFile(
+            join('./src', cssFile),
+            join('./dist', cssFile)
+          );
+        } catch (error) {
+          console.error(chalk.red(`Failed to copy CSS file ${cssFile}`));
+          process.exit(1);
+        }
+      }
+
+      const finalHtml = await buildPage(route.path, source, template, cssImports);
+      const outputPath = route.path === '/' 
+        ? join('./dist', 'index.html')
+        : join('./dist', route.path, 'index.html');
+
+      await mkdir(join('./dist', route.path), { recursive: true });
+      await writeFile(outputPath, finalHtml);
+    }
+
+    const totalTime = Date.now() - startTime;
+    console.log(chalk.green(`\n✨ Build completed in ${totalTime}ms`));
+    console.log(chalk.white(`   • Pages built: ${routes.length}`));
+
+    process.exit(0);
+
+  } catch (error) {
+    console.error(chalk.red(`Build failed: ${error}`));
+    process.exit(1);
+  }
+}
+
 function extractCSSImports(source: string): string[] {
   const cssImports: string[] = [];
   const lines = source.split('\n');
   
   for (const line of lines) {
-    // Look for import statements with .css files
     const cssMatch = line.match(/import\s+['"]([^'"]+\.css)['"]/);
     if (cssMatch) {
       cssImports.push(cssMatch[1]);
@@ -60,132 +97,92 @@ function extractCSSImports(source: string): string[] {
   return cssImports;
 }
 
-async function buildPage(route: string, source: string, template: string, cssImports: string[]): Promise<string> {
-  // Compile Tiger to HTML
-  updateProgress(`Compiling ${route} to HTML...`);
-  let html: string;
-  
+export async function buildProject(srcDir: string, outDir: string): Promise<void> {
+  const stats: BuildStats = {
+    totalFiles: 0,
+    compiledFiles: 0,
+    errors: [],
+    startTime: Date.now()
+  };
+
+  let threadPool: ThreadPool | null = null;
+
   try {
-    html = await compileTigerToHTML(source);
-    log.success(`Compiled ${route}`);
+    threadPool = new ThreadPool();
+    await mkdir(outDir, { recursive: true });
+    
+    const files = await getAllTigerFiles(srcDir);
+    stats.totalFiles = files.length;
+
+    const chunkSize = 10;
+    for (let i = 0; i < files.length; i += chunkSize) {
+      const chunk = files.slice(i, i + chunkSize);
+      
+      const fileContents = await Promise.all(
+        chunk.map(async file => ({
+          path: file,
+          content: await readFile(file, 'utf-8')
+        }))
+      );
+
+      const compilationPromises = fileContents.map(async ({ path, content }) => {
+        try {
+          const html = await threadPool!.compile(content);
+          const outPath = join(outDir, path.replace(srcDir, '').replace('.tiger', '.html'));
+          await mkdir(dirname(outPath), { recursive: true });
+          await writeFile(outPath, html);
+          stats.compiledFiles++;
+        } catch (error) {
+          stats.errors.push({
+            file: path,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
+      });
+
+      await Promise.all(compilationPromises);
+    }
+
+    stats.endTime = Date.now();
+    const duration = (stats.endTime - stats.startTime) / 1000;
+    
+    console.log(chalk.cyan('\nBuild Complete'));
+    console.log(chalk.blue(`Files: ${stats.totalFiles} | Success: ${stats.compiledFiles} | Failed: ${stats.errors.length} | Time: ${duration.toFixed(2)}s`));
+    
+    if (stats.errors.length > 0) {
+      console.log(chalk.red('\nErrors:'));
+      stats.errors.forEach(({ file, error }) => {
+        console.log(chalk.red(`  ${file}: ${error}`));
+      });
+    }
+
   } catch (error) {
-    log.error(`Compilation failed for ${route}: ${error}`);
+    console.error(chalk.red(`Build failed: ${error}`));
     throw error;
+  } finally {
+    if (threadPool) {
+      await threadPool.shutdown();
+      threadPool = null;
+    }
   }
-
-  // Generate responsive styles
-  updateProgress(`Generating responsive styles for ${route}...`);
-  const responsiveCSS = generateResponsiveCSS(html);
-  log.success(`Generated responsive styles for ${route}`);
-
-  // Add CSS link tags to head
-  let finalHtml = template;
-  if (cssImports.length > 0) {
-    const cssLinks = cssImports
-      .map(cssFile => `    <link rel="stylesheet" href="${cssFile}">`)
-      .join('\n');
-    finalHtml = finalHtml.replace('</head>', `${cssLinks}\n</head>`);
-  }
-
-  // Add responsive styles
-  finalHtml = finalHtml.replace('</head>', `    <style>\n${responsiveCSS}\n    </style>\n</head>`);
-
-  // Replace content
-  updateProgress(`Injecting compiled content for ${route}...`);
-  finalHtml = finalHtml.replace("{{content}}", html).replaceAll("{/*", "<!--").replaceAll("*/}", "-->");
-  log.success(`Generated final HTML for ${route}`);
-
-  return finalHtml;
 }
 
-async function build() {
-  console.log(chalk.cyan('\n🚀 Starting Tiger Build Process...\n'));
-  const startTime = Date.now();
-
-  try {
-    // Initialize router
-    const router = new Router({
-      pagesDir: './src/pages',
-      distDir: './dist'
-    });
-    await router.initialize();
-
-    // Create dist directory if it doesn't exist
-    try {
-      updateProgress('Creating dist directory...');
-      await mkdir('./dist', { recursive: true });
-      log.success('Created/Verified dist directory');
-    } catch (error) {
-      log.error(`Failed to create dist directory: ${error}`);
-      process.exit(1);
-    }
-
-    // Read template
-    updateProgress('Reading HTML template...');
-    const template = await readFile('./src/template.html', 'utf-8');
-    log.success(`Template size: ${chalk.blue(template.length)} bytes`);
-
-    // Build each page
-    const routes = router.getRoutes();
-    for (const route of routes) {
-      updateProgress(`Processing ${route.path}...`);
-      
-      // Read source file
-      const source = await router.getPageContent(route);
-      log.success(`Read ${route.path} (${chalk.blue(source.length)} bytes)`);
-
-      // Extract CSS imports
-      const cssImports = extractCSSImports(source);
-      if (cssImports.length > 0) {
-        log.info(`Found ${chalk.blue(cssImports.length)} CSS imports for ${route.path}`);
-        
-        // Copy CSS files to dist
-        for (const cssFile of cssImports) {
-          updateProgress(`Copying CSS file: ${cssFile}...`);
-          try {
-            await copyFile(
-              join('./src', cssFile),
-              join('./dist', cssFile)
-            );
-            log.success(`Copied ${cssFile} to dist folder`);
-          } catch (error) {
-            log.error(`Failed to copy CSS file ${cssFile}: ${error}`);
-            process.exit(1);
-          }
-        }
+async function getAllTigerFiles(dir: string): Promise<string[]> {
+  const entries = await readdir(dir, { withFileTypes: true });
+  const files: string[] = [];
+  
+  await Promise.all(
+    entries.map(async entry => {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        files.push(...await getAllTigerFiles(path));
+      } else if (entry.name.endsWith('.tiger')) {
+        files.push(path);
       }
-
-      // Build the page
-      const finalHtml = await buildPage(route.path, source, template, cssImports);
-
-      // Write output
-      const outputPath = route.path === '/' 
-        ? join('./dist', 'index.html')
-        : join('./dist', route.path, 'index.html');
-
-      // Create directory for the route if needed
-      await mkdir(join('./dist', route.path), { recursive: true });
-      
-      updateProgress(`Writing ${route.path} to ${outputPath}...`);
-      await writeFile(outputPath, finalHtml);
-      log.success(`Successfully wrote ${route.path} to ${outputPath}`);
-    }
-
-    const totalTime = Date.now() - startTime;
-    spinner.stop();
-    console.log(chalk.green(`\n✨ Build completed in ${chalk.blue(totalTime)}ms`));
-    console.log(chalk.cyan('\n📊 Build Statistics:'));
-    console.log(chalk.white(`   • Pages built: ${chalk.blue(routes.length)}`));
-    console.log(chalk.white(`   • Total build time: ${chalk.blue(totalTime)}ms\n`));
-
-    // Exit successfully
-    process.exit(0);
-
-  } catch (error) {
-    spinner.stop();
-    log.error(`Build failed: ${error}`);
-    process.exit(1);
-  }
+    })
+  );
+  
+  return files;
 }
 
 build(); 
